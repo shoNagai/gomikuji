@@ -8,15 +8,39 @@ import (
 	"time"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	msg := showOmikuji()
-	fmt.Fprint(w, msg)
-}
 func main() {
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
 }
 
+/*
+今週の運勢
+URLGetパラメータ
+name:占い対象の名前
+*/
+func handler(w http.ResponseWriter, r *http.Request) {
+	var name string = r.FormValue("name")
+	if name == "" {
+		name = "名無しさん"
+	} else {
+		name = name + "さん"
+	}
+
+	name = fmt.Sprintf("〜%sの今週の運勢〜\n", name)
+
+	omi := showOmikuji()
+
+	buf := make([]byte, 0)
+	buf = append(buf, name...)
+	buf = append(buf, omi...)
+
+	fmt.Fprint(w, string(buf))
+}
+
+/*
+	一週間分のgomikuji結果を返却
+	戻り値：string
+*/
 func showOmikuji() string {
 
 	t := time.Now().UnixNano()
@@ -28,7 +52,7 @@ func showOmikuji() string {
 
 	for i := 0; i < 7; i++ {
 
-		msg := goOmikuji()
+		msg := gomikuji()
 
 		str := fmt.Sprintf("%s曜日の運勢：%s\n", yobi[i], msg)
 		buf = append(buf, str...)
@@ -38,7 +62,15 @@ func showOmikuji() string {
 
 }
 
-func goOmikuji() string {
+/*
+	ランダムにおみくじ結果を返却
+	戻り値：stirng
+    6：大吉
+	5,4：中吉
+	3,2：吉
+	1：凶
+*/
+func gomikuji() string {
 
 	kuji := rand.Intn(6) + 1
 	var msg string = ""
@@ -55,10 +87,3 @@ func goOmikuji() string {
 
 	return msg
 }
-
-// ランダムに１〜６までの数字を出す関数
-// 6：大吉、
-// 5,4：中吉
-// 3,2：吉
-// 1：凶
-//	omikuji := map[int]string{1: "凶", 2: "吉", 3: "吉", 4: "中吉", 5: "中吉", 6: "大吉"}
